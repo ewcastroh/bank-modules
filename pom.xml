@@ -7,8 +7,8 @@
     <!-- Parent POM -->
     <groupId>com.ewch.modules</groupId>
     <artifactId>bank-modules</artifactId>
-    <packaging>pom</packaging>
     <version>1.0.0</version>
+    <packaging>pom</packaging>
     <name>bank-modules</name>
 
     <modules>
@@ -74,6 +74,7 @@
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
                         <release>${maven.compiler.release}</release>
+                        <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
                 </plugin>
             </plugins>
