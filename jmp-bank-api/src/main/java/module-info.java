@@ -1,4 +1,4 @@
 module jmp.bank.api {
     requires jmp.bank.dto;
-    exports com.ewch.modules.jpm.bank.api;
+    exports com.ewch.modules.jmp.bank.api;
 }

@@ -1,11 +1,13 @@
 package com.ewch.modules.jmp.cloud.bank.impl;
 
+import com.ewch.modules.jmp.bank.api.Bank;
 import com.ewch.modules.jmp.dto.BankCard;
 import com.ewch.modules.jmp.dto.BankCardType;
 import com.ewch.modules.jmp.dto.CreditBankCard;
 import com.ewch.modules.jmp.dto.DebitBankCard;
 import com.ewch.modules.jmp.dto.User;
-import com.ewch.modules.jpm.bank.api.Bank;
+
+import java.util.Random;
 
 public class BankImpl implements Bank {
 
@@ -14,15 +16,25 @@ public class BankImpl implements Bank {
         if (user == null || bankCardType == null) {
             return null;
         }
-        int cardNumber = Integer.parseInt(String.valueOf(Math.random()));
+        String cardNumber = getRandomCardNumber();
         switch (bankCardType) {
             case CREDIT -> {
-                return new CreditBankCard(Integer.toString(cardNumber), user);
+                return new CreditBankCard(cardNumber, user);
             }
             case DEBIT -> {
-                return new DebitBankCard(Integer.toString(cardNumber), user);
+                return new DebitBankCard(cardNumber, user);
             }
             default -> throw new IllegalArgumentException("Unknown BankCardType " + bankCardType);
         }
+    }
+
+    private static String getRandomCardNumber() {
+        var numberOfDigits = 16;
+        var random = new Random();
+        StringBuilder sb = new StringBuilder(numberOfDigits);
+        for (var i = 0; i < numberOfDigits; i++) {
+            sb.append((char) ('0' + random.nextInt(10)));
+        }
+        return sb.toString();
     }
 }
