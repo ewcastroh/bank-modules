@@ -47,6 +47,11 @@ public class CloudServiceImpl implements CloudService {
     }
 
     @Override
+    public BankCard createBankCard(BankCard bankCard) {
+        return dbConfig.createBankCard(bankCard);
+    }
+
+    @Override
     public Subscription createSubscription(Subscription subscription) {
         return dbConfig.createSubscription(subscription);
     }

@@ -41,4 +41,6 @@ public interface CloudService {
     List<Object> getAllBankCards();
 
     List<Object> getAllSubscriptions();
+
+    BankCard createBankCard(BankCard bankCard);
 }

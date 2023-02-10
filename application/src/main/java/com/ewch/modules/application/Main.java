@@ -4,6 +4,7 @@ import com.ewch.modules.jmp.bank.api.Bank;
 import com.ewch.modules.jmp.cloud.bank.impl.BankImpl;
 import com.ewch.modules.jmp.cloud.service.impl.CloudServiceImpl;
 import com.ewch.modules.jmp.cloud.service.impl.database.DBConfig;
+import com.ewch.modules.jmp.dto.BankCard;
 import com.ewch.modules.jmp.dto.BankCardType;
 import com.ewch.modules.jmp.dto.Subscription;
 import com.ewch.modules.jmp.dto.User;
@@ -56,12 +57,14 @@ public class Main {
         System.out.println("Select type of bank card (Default DEBIT card):");
         System.out.println("1. CREDIT");
         System.out.println("2. DEBIT");
+        BankCard newBankCard;
         int bankCardType = scanner.nextInt();
         if (bankCardType == 1) {
-            bank.createBankCard(user, BankCardType.CREDIT);
+            newBankCard = bank.createBankCard(user, BankCardType.CREDIT);
         } else {
-            bank.createBankCard(user, BankCardType.DEBIT);
+            newBankCard = bank.createBankCard(user, BankCardType.DEBIT);
         }
+        cloudService.createBankCard(newBankCard);
     }
 
     private static void createSubscription() {

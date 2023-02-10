@@ -5,10 +5,10 @@ import com.ewch.modules.jmp.dto.Subscription;
 import com.ewch.modules.jmp.dto.User;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,15 +43,15 @@ public class DBConfig {
     }
 
     public static void cleanDatabase() throws SQLException {
-        Statement statement = connection.createStatement();
-        String sql = "DROP ALL OBJECTS";
+        var statement = connection.createStatement();
+        var sql = "DROP ALL OBJECTS";
         statement.execute(sql);
         System.out.println("Cleaned database.");
     }
 
     private static void createTables() throws SQLException {
-        Statement statement = connection.createStatement();
-        String sqlTableUsers = """
+        var statement = connection.createStatement();
+        var sqlTableUsers = """
                 CREATE TABLE IF NOT EXISTS USERS(
                     id INTEGER NOT NULL AUTO_INCREMENT,
                     name VARCHAR(50),
@@ -63,7 +63,7 @@ public class DBConfig {
         statement.executeUpdate(sqlTableUsers);
         System.out.println("Created table Users.");
 
-        String sqlTableSubscriptions = """
+        var sqlTableSubscriptions = """
                 CREATE TABLE IF NOT EXISTS SUBSCRIPTIONS(
                     id INTEGER NOT NULL AUTO_INCREMENT,
                     bankcard VARCHAR(16),
@@ -74,10 +74,10 @@ public class DBConfig {
         statement.executeUpdate(sqlTableSubscriptions);
         System.out.println("Created table Subscriptions.");
 
-        String sqlTableBankCards = """
+        var sqlTableBankCards = """
                 CREATE TABLE IF NOT EXISTS BANKCARDS(
                     id INTEGER NOT NULL AUTO_INCREMENT,
-                    bankcard VARCHAR(16),
+                    number VARCHAR(16),
                     user_id INTEGER,
                     PRIMARY KEY(id),
                     FOREIGN KEY (user_id) REFERENCES USERS(id)
@@ -88,8 +88,8 @@ public class DBConfig {
     }
 
     private static void insertMockData() throws SQLException {
-        Statement statement = connection.createStatement();
-        String sqlInsertUsers = "INSERT INTO USERS(name, surname, birthday) " + "VALUES ('Smoke', 'Cast', '1993-03-21')";
+        var statement = connection.createStatement();
+        var sqlInsertUsers = "INSERT INTO USERS(name, surname, birthday) " + "VALUES ('Smoke', 'Cast', '1993-03-21')";
         statement.executeUpdate(sqlInsertUsers);
         sqlInsertUsers = "INSERT INTO USERS(name, surname, birthday) " + "VALUES ('Mona', 'Mar', '1992-07-07')";
         statement.executeUpdate(sqlInsertUsers);
@@ -103,60 +103,116 @@ public class DBConfig {
     public List<User> getUsers() {
         List<User> usersList = new ArrayList<>();
         try {
-            Statement statement = connection.createStatement();
-            String selectRecords = "SELECT id, name, surname, birthday FROM USERS";
-            var resultSet = statement.executeQuery(selectRecords);
+            var selectRecords = "SELECT id, name, surname, birthday FROM USERS";
+            var statement = connection.prepareStatement(selectRecords);
+            var resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                String name = resultSet.getString("name");
-                String surname = resultSet.getString("surname");
-                LocalDate birthday = resultSet.getDate("birthday").toLocalDate();
-                usersList.add(new User(name, surname, birthday));
+                var id = resultSet.getInt("id");
+                var name = resultSet.getString("name");
+                var surname = resultSet.getString("surname");
+                var birthday = resultSet.getDate("birthday").toLocalDate();
+                usersList.add(new User(id, name, surname, birthday));
             }
         } catch (SQLException e) {
-            System.err.println("Error getting DB connection.");
+            System.err.println("Error in DB query.");
         }
         return usersList;
     }
 
     public User createUser(User user) {
         try {
-            Statement statement = connection.createStatement();
-            String sqlInsertUser = "INSERT INTO USERS(name, surname, birthday) "
-                    + "VALUES ('" + user.getName() + "', '" + user.getSurname() + "', '" + user.getBirthday() + "')";
-            statement.executeUpdate(sqlInsertUser);
+            var sqlInsertUser = "INSERT INTO USERS(name, surname, birthday) VALUES (?, ?, ?)";
+            var statement = connection.prepareStatement(sqlInsertUser, Statement.RETURN_GENERATED_KEYS);
+            statement.setString(1, user.getName());
+            statement.setString(2, user.getSurname());
+            statement.setDate(3, Date.valueOf(user.getBirthday()));
+            var affectedRows = statement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating user failed, no rows affected.");
+            }
+            try (var generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    user.setId(generatedKeys.getInt(1));
+                }
+                else {
+                    throw new SQLException("Creating user failed, no ID obtained.");
+                }
+            }
             System.out.println("User created successfully.");
+        } catch (SQLException e) {
+            System.err.println("Error creating user.");
+        }
+        return user;
+    }
+
+    public BankCard createBankCard(BankCard bankCard) {
+        try {
+            var sqlInsertBankCard = "INSERT INTO BANKCARDS(number, user_id) VALUES (?, ?)";
+            var statement = connection.prepareStatement(sqlInsertBankCard);
+            statement.setString(1, bankCard.getNumber());
+            statement.setInt(2, bankCard.getUser().getId());
+            var affectedRows = statement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating bank card failed, no rows affected.");
+            }
+            System.out.println("Bank card created successfully.");
+        } catch (SQLException e) {
+            System.err.println("Error creating bank card.");
+        }
+        return bankCard;
+    }
+    public Subscription createSubscription(Subscription subscription) {
+        try {
+            var sqlInsertSubscription = "INSERT INTO SUBSCRIPTIONS(bankcard, startDate) VALUES (?, ?)";
+            var statement = connection.prepareStatement(sqlInsertSubscription);
+            statement.setString(1, subscription.getBankcard());
+            statement.setDate(2, Date.valueOf(subscription.getStartDate()));
+            var affectedRows = statement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating subscription failed, no rows affected.");
+            }
+            System.out.println("Subscription created successfully.");
+        } catch (SQLException e) {
+            System.err.println("Error creating subscription.");
+        }
+        return subscription;
+    }
+
+    public User getUserById(int user_id) {
+        User user =  null;
+        try {
+            var selectRecords = "SELECT id, name, surname, birthday FROM USERS WHERE id = ?";
+            var statement = connection.prepareStatement(selectRecords);
+            statement.setInt(1, user_id);
+            var resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                var id = resultSet.getInt("id");
+                var name = resultSet.getString("name");
+                var surname = resultSet.getString("surname");
+                var birthday = resultSet.getDate("birthday").toLocalDate();
+                user = new User(id, name, surname, birthday);
+            }
         } catch (SQLException e) {
             System.err.println("Error getting DB connection.");
         }
         return user;
     }
 
-    public Subscription createSubscription(Subscription subscription) {
-        try {
-            Statement statement = connection.createStatement();
-            String sqlInsertSubscription = "INSERT INTO SUBSCRIPTIONS(bankcard, startDate) "
-                    + "VALUES ('" + subscription.getBankcard() + "', '" + subscription.getStartDate() + "')";
-            statement.executeUpdate(sqlInsertSubscription);
-            System.out.println("Subscription created successfully.");
-        } catch (SQLException e) {
-            System.err.println("Error getting DB connection.");
-        }
-        return subscription;
-    }
 
     public Subscription getSubscriptionByBankCardNumber(String bankCardNumber) {
         List<Subscription> subscriptionsList = new ArrayList<>();
         try {
-            Statement statement = connection.createStatement();
-            String selectRecords = "SELECT id, bankcard, startDate FROM SUBSCRIPTIONS WHERE bankCard = " + bankCardNumber;
-            var resultSet = statement.executeQuery(selectRecords);
+            var selectRecords = "SELECT id, bankcard, startDate FROM SUBSCRIPTIONS WHERE bankCard = ?";
+            var statement = connection.prepareStatement(selectRecords);
+            statement.setString(1, bankCardNumber);
+            var resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                String bankCard = resultSet.getString("bankCard");
-                LocalDate startDate = resultSet.getDate("startDate").toLocalDate();
+                var bankCard = resultSet.getString("bankCard");
+                var startDate = resultSet.getDate("startDate").toLocalDate();
                 subscriptionsList.add(new Subscription(bankCard, startDate));
             }
         } catch (SQLException e) {
-            System.err.println("Error getting DB connection.");
+            System.err.println("Error getting subscription by bank card number.");
         }
         return !subscriptionsList.isEmpty() ? subscriptionsList.get(0) : null;
     }
@@ -164,13 +220,13 @@ public class DBConfig {
     public List<BankCard> getAllBankCards() {
         List<BankCard> bankCardsList = new ArrayList<>();
         try {
-            Statement statement = connection.createStatement();
-            String selectRecords = "SELECT id, number, user FROM BANKCARDS";
-            var resultSet = statement.executeQuery(selectRecords);
+            var selectRecords = "SELECT id, number, user_id FROM BANKCARDS";
+            var statement = connection.prepareStatement(selectRecords);
+            var resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                String number = resultSet.getString("number");
-                User user = (User) resultSet.getObject("user");
-                LocalDate birthday = resultSet.getDate("birthday").toLocalDate();
+                var number = resultSet.getString("number");
+                var user_id = resultSet.getInt("user_id");
+                var user = getUserById(user_id);
                 bankCardsList.add(new BankCard(number, user));
             }
         } catch (SQLException e) {
@@ -182,12 +238,12 @@ public class DBConfig {
     public List<Subscription> getAllSubscriptions() {
         List<Subscription> subscriptionList = new ArrayList<>();
         try {
-            Statement statement = connection.createStatement();
-            String selectRecords = "SELECT id, bankcard, startDate FROM SUBSCRIPTIONS";
-            var resultSet = statement.executeQuery(selectRecords);
+            var selectRecords = "SELECT id, bankcard, startDate FROM SUBSCRIPTIONS";
+            var statement = connection.prepareStatement(selectRecords);
+            var resultSet = statement.executeQuery();
             while (resultSet.next()) {
-                String bankcard = resultSet.getString("bankcard");
-                LocalDate startDate = resultSet.getDate("startDate").toLocalDate();
+                var bankcard = resultSet.getString("bankcard");
+                var startDate = resultSet.getDate("startDate").toLocalDate();
                 subscriptionList.add(new Subscription(bankcard, startDate));
             }
         } catch (SQLException e) {
