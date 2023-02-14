@@ -6,7 +6,6 @@ import com.ewch.modules.jmp.dto.User;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -30,17 +29,15 @@ public interface CloudService {
         return ChronoUnit.YEARS.between(user.getBirthday(), LocalDate.now()) > 18;
     }
 
-    static List<Subscription> getAllSubscriptionsByCondition(Predicate<Subscription> subscriptionPredicate) {
-        return new ArrayList<>();
-    }
+    List<Subscription> getAllSubscriptionsByCondition(Predicate<Subscription> subscriptionPredicate);
 
     User createUser(User user);
 
     Subscription createSubscription(Subscription subscription);
 
-    List<Object> getAllBankCards();
+    List<BankCard> getAllBankCards();
 
-    List<Object> getAllSubscriptions();
+    List<Subscription> getAllSubscriptions();
 
     BankCard createBankCard(BankCard bankCard);
 }

@@ -9,6 +9,7 @@ import com.ewch.modules.jmp.service.api.CloudService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CloudServiceImpl implements CloudService {
@@ -42,6 +43,14 @@ public class CloudServiceImpl implements CloudService {
     }
 
     @Override
+    public List<Subscription> getAllSubscriptionsByCondition(Predicate<Subscription> subscriptionPredicate) {
+        return getAllSubscriptions()
+                .stream()
+                .filter(subscriptionPredicate)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public User createUser(User user) {
         return dbConfig.createUser(user);
     }
@@ -57,14 +66,14 @@ public class CloudServiceImpl implements CloudService {
     }
 
     @Override
-    public List<Object> getAllBankCards() {
+    public List<BankCard> getAllBankCards() {
         return dbConfig.getAllBankCards()
                 .stream()
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
-    public List<Object> getAllSubscriptions() {
+    public List<Subscription> getAllSubscriptions() {
         return dbConfig.getAllSubscriptions()
                 .stream()
                 .collect(Collectors.toUnmodifiableList());

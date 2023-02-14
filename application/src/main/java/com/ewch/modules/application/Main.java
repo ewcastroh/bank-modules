@@ -77,6 +77,37 @@ public class Main {
         cloudService.createSubscription(subscription);
     }
 
+    private static void getAllSubscriptionsAfterDate() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Get subscriptions after date (YYYY-MM-DD): ");
+        String date = scanner.nextLine();
+        LocalDate localDate = LocalDate.parse(date);
+        cloudService.getAllSubscriptionsByCondition(subscription -> subscription.getStartDate().isAfter(localDate))
+                .forEach(System.out::println);
+    }
+
+    private static void getAllSubscriptionsBeforeDate() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Get subscriptions after date (YYYY-MM-DD): ");
+        String date = scanner.nextLine();
+        LocalDate localDate = LocalDate.parse(date);
+        cloudService.getAllSubscriptionsByCondition(subscription -> subscription.getStartDate().isBefore(localDate))
+                .forEach(System.out::println);
+    }
+
+    private static void getAllSubscriptionsInRangeDate() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Get subscriptions after date (YYYY-MM-DD): ");
+        String afterDate = scanner.nextLine();
+        System.out.print("Get subscriptions before date (YYYY-MM-DD): ");
+        String beforeDate = scanner.nextLine();
+        LocalDate afterLocalDate = LocalDate.parse(afterDate);
+        LocalDate beforeLocalDate = LocalDate.parse(beforeDate);
+        cloudService.getAllSubscriptionsByCondition(subscription -> subscription.getStartDate().isAfter(afterLocalDate)
+                        && subscription.getStartDate().isBefore(beforeLocalDate))
+                .forEach(System.out::println);
+    }
+
     private static void displayMenu() {
 
         Scanner scanner = new Scanner(System.in);
@@ -91,6 +122,9 @@ public class Main {
             System.out.println("4. Get all bank cards.");
             System.out.println("5. Get all subscriptions.");
             System.out.println("6. Get subscription by bank card number.");
+            System.out.println("7. Get subscriptions after specific date.");
+            System.out.println("8. Get subscriptions before specific date.");
+            System.out.println("9. Get subscriptions in range date.");
             System.out.println("0. Exit.");
 
             try {
@@ -113,6 +147,15 @@ public class Main {
                         break;
                     case 6:
                         getSubscriptionByBankCardNumber();
+                        break;
+                    case 7:
+                        getAllSubscriptionsAfterDate();
+                        break;
+                    case 8:
+                        getAllSubscriptionsBeforeDate();
+                        break;
+                    case 9:
+                        getAllSubscriptionsInRangeDate();
                         break;
                     case 0:
                         System.out.println("Thanks for using our system.");
